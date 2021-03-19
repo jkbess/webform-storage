@@ -1,0 +1,9 @@
+{
+    "name": "bessj/webform-storage",
+    "description": "Simple storage of web form submissions in SQLite.",
+    "type": "library",
+    "require": {},
+    "autoload": {
+        "psr-4": {"Webform\\": "src/"}
+    }
+}

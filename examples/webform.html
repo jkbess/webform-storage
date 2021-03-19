@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Generic Form</title>
+<meta name="robots" content="nofollow,noindex" />
+
+</head>
+
+<body>
+    
+<main>
+
+    <h1>Test Form</h1>
+
+    <form id="test-form">
+        <div>
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name"/>
+        </div>
+
+        <div>
+            <label for="email">Email</label>
+            <input type="text" name="email" id="email"/>
+        </div>
+        
+        <div>
+            <label for="random_number">An integer of some kind</label>
+            <input type="text" name="random_number" id="random_number"/>
+        </div>
+        
+        <div>
+            <label for="random_boolean">A boolean of some kind</label>
+            <input type="checkbox" name="random_boolean" id="random_boolean"/>
+        </div>
+
+        <div>
+            <label for="filey_file">File to upload</label>
+            <input type="file" name="filey_file" id="filey_file" />
+        </div>
+
+        <input type="submit" value="Submit" class="btn btn-primary" />
+    </form>
+
+</div>
+</main>
+
+</body>
+
+<script>
+(function(){
+  function submitForm(event) {
+    event.preventDefault();
+    var postData = new FormData();
+    // add fields
+    var name = document.getElementById('name').value;
+    var email = document.getElementById('email').value;
+    var random_number = document.getElementById('random_number').value;
+    var random_boolean = document.getElementById('random_boolean').checked;
+    var filey_file = document.getElementById('filey_file').files[0];
+
+    postData.append('request_type', 'save_form');
+    postData.append('name', name);
+    postData.append('email', email);
+    postData.append('random_number', parseInt(random_number, 10));
+    postData.append('random_boolean', random_boolean);
+    if (filey_file) {
+      postData.append('filey_file', filey_file);
+    }
+
+    var url = window.location.href.split('/');
+    url.pop();
+    url = url.join('/') + '/request-handler.php';
+    fetch(url, {
+      method: 'post',
+      body: postData
+    }).then(response => response.json())
+      .then(response => {
+        alert(response.message);
+        document.getElementById('test-form').reset();
+      });
+  }
+  document.getElementById('test-form').addEventListener('submit', submitForm);
+})();
+</script>
+</html>

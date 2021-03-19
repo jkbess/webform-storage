@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Get Web Form Submissions</title>
+<meta name="robots" content="nofollow,noindex" />
+
+</head>
+
+<body>
+    
+<main>
+
+<h1>Get Webform Submissions</h1>
+
+<div class="container">
+
+    <div class="mb-3">
+        <h2>Filters</h2>
+        <div id="filter-section">
+            <div class="filter-group">
+                <select class="form-column">
+                  <option selected disabled value="">column name</option>
+                </select>
+    
+                <select class="form-comparator">
+                    <option selected disabled value="">comparison</option>
+                    <option value="=">=</option>
+                    <option value=">">&gt;</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<">&lt;</option>
+                    <option value="<=">&lt;=</option>
+                    <option value="LIKE">includes</option>
+                </select>
+    
+                <input class="form-value" type="text" placeholder="value to compare"/>
+            </div>
+        </div>
+    
+        <button id="add-filter" class="btn btn-primary hidden-btn">Add filter</button>
+    </div>
+
+    <div class="mb-3">
+        <h2>Sort Results</h2>
+        <div id="sort-section">
+              <select class="sort-column">
+                  <option selected disabled>column name</option>
+              </select>
+        </div>
+    </div>
+      
+    <div class="request-btn-section">
+        <button id="show-entries" class="btn btn-primary hidden-btn">Display submitted entries</button>
+        <button id="download-entries" class="btn btn-primary hidden-btn">Display and download as CSV</button>
+    </div>
+    
+
+    <h2>Submitted Forms</h2>
+    <div id="info"><em>Please make filter selections above, if desired, and then click </em> Display submitted entries.</div>
+
+</div>
+</main>
+
+</body>
+
+<script>
+(function(){
+    function addFilter(columnName, isNumeric) {
+    const newFilter = document.querySelector('.filter-group').cloneNode(true);
+    document.getElementById('filter-section').appendChild(newFilter);
+}
+
+  function exportCSV (headers, dataRows) {
+    const csvRowNames = headers.join(",") + "\n";
+    const csvRows = dataRows.map(row => {
+    const values = [];
+    headers.forEach(key => {
+        if (row.hasOwnProperty(key) && row[key] !== null) {
+        if (typeof row[key] === 'string' && row[key].match(/[,"\n]/)) {
+            values.push('"' + row[key].replace(/"/g, '""') + '"');
+        } else {
+            values.push(row[key]);
+        }
+        } else {
+        values.push("");
+        }
+    });
+    return values.join(",");
+    }).join("\n");
+
+    const uri = encodeURI("data:text/csv;charset=utf-8," + csvRowNames + csvRows);
+    var tempLink = document.createElement("a");
+    tempLink.setAttribute("href", uri);
+    tempLink.setAttribute("download", "forms.csv");
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    tempLink.parentElement.removeChild(tempLink);
+  }
+
+  function getEntries (event) {
+    const clickedButton = event.target.id;
+    const filters = [];
+    const fg = document.querySelectorAll('.filter-group');
+    fg.forEach(group => {
+      const filter = {};
+      const column = group.querySelector('.form-column').value;
+      const comp = group.querySelector('.form-comparator').value;
+      const val = group.querySelector('.form-value').value.trim();
+      if (column && comp && val) {
+        filter.column_name = column;
+        filter.comparator = comp;
+        filter.filter_value = val;
+        filters.push(filter);
+      }
+    });
+    
+    const sortColumn = document.querySelector('.sort-column').value;
+
+    const postData = new FormData();
+    postData.append('request_type', 'get_entries');
+    if (filters !== []) {
+      postData.append('filters', JSON.stringify(filters));
+    }
+    if (sortColumn) {
+      postData.append('sort_by', sortColumn);
+    }
+    fetch(postUrl, {
+      method: 'post',
+      body: postData
+    }).then(response => response.json())
+      .then(response => {
+        if (!response.success || !response.data.length) {      
+            document.getElementById('info').innerHTML = response.message || 'Error';
+            return false;
+        }
+        const headers = getHeaders(response.data[0]);
+        showData(headers, response.data);
+        if (clickedButton === 'download-entries') {
+        exportCSV(headers, response.data);
+        }
+      });
+  }
+
+  function getFields () {
+    const postData = new FormData();
+    postData.append('request_type', 'get_field_list');    
+    postData.append('include_default', true);
+    fetch(postUrl, {
+      method: 'post',
+      body: postData
+    }).then(response => response.json())
+        .then(response => setOptionsAndFieldRef(response));
+  }
+
+  function getHeaders (dataRow) {
+    const headers = ['id', 'submission_date'];
+    Object.keys(dataRow).forEach(columnName => {
+      if (headers.indexOf(columnName) < 0 && columnName !== 'attachments') {
+        headers.push(columnName);
+      }
+    });
+    headers.push('attachments');
+    return headers;
+  }
+
+  function setOptionsAndFieldRef(fields) {
+    if (!fields.data) return;
+    const filterSelect = document.querySelector('.form-column');    
+    const sortSelect = document.querySelector('.sort-column');
+    let option;
+    fields.data.forEach(field => {
+      option = document.createElement('option');
+      option.value = field.columnName;
+      option.innerHTML = field.columnName;
+      filterSelect.appendChild(option);
+      sortSelect.appendChild(option.cloneNode(true));
+    });
+    document.querySelectorAll('.hidden-btn').forEach(elem => {
+      elem.classList.remove('hidden-btn');
+    });
+}
+
+  function showData (headers, dataRows) {
+    let html = '<table><thead><tr>';
+    headers.forEach(header => {
+      html += '<th>' + header + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+    dataRows.forEach(row => {
+      html += '<tr>';
+      headers.forEach(key => {
+        html += '<td>' + ((row.hasOwnProperty(key) && row[key] !== null) ? row[key] : '-') + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('info').innerHTML = html;
+  }
+
+  let postUrl = window.location.href.split('/');
+  postUrl.pop();
+  postUrl = postUrl.join('/') + '/request-handler.php';
+
+  document.getElementById('add-filter').addEventListener('click', addFilter);
+  document.getElementById('show-entries').addEventListener('click', getEntries);
+  document.getElementById('download-entries').addEventListener('click', getEntries);
+
+  getFields();
+
+})();
+</script>
+</html>
