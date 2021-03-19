@@ -1,16 +1,11 @@
 <?php
 
-//namespace Webform;
-//require (__DIR__ . '/autoload.php');
 require __DIR__ . '/vendor/autoload.php';
 
-
 use Webform\Connector\DatabaseConnector;
-use Webform\Installer\DatabaseInstaller;
-use Webform\Fetcher\FieldFetcher;
+//use Webform\Fetcher\FieldFetcher;
 use Webform\Fetcher\EntryFetcher;
 use Webform\Submitter\FormSubmitter;
-use Webform\Verifier\UserVerifier;
 use Webform\Editor\FormEditor;
 
 class Webform
@@ -48,11 +43,6 @@ class Webform
         $post = $this->post_data;
         $config = $this->config;
 
-        $no_access_result = [
-            'success' => false,
-            'message' => 'You do not have permission to use this feature.'
-        ];
-
         switch ($this->request_type) {           
             /*case 'get_field_list':
                 $fetcher = new FieldFetcher($db_connector, $post);
@@ -62,10 +52,7 @@ class Webform
                 return $submitter->storeSubmission($post);
                 
             case 'get_entries':
-                if (!$this->verifyUser()) {
-                    return $no_access_result;
-                }
-                $fetcher = new EntryFetcher($db_connector, $post);
+                $fetcher = new EntryFetcher($db_connector, $config, $post);
                 return $fetcher->getSubmitted();
             
             case null:

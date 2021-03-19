@@ -67,7 +67,7 @@ class FormSubmitter implements FormSubmitterInterface
         $missing = [];
         foreach ($fields as $field => $data) {
             //check for required, push to $missing array if not present
-            $data_type = $data['type'];
+            $data_type = strtoupper($data['type']);
             if (!isset($form[$field])) {
                 $alias = $data['alias'] ?? null;
                 if (isset($form[$alias])) {

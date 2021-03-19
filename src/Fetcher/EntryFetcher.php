@@ -2,13 +2,11 @@
 
 namespace Webform\Fetcher;
 
-use Webform\Fetcher\FieldFetcher;
-
 class EntryFetcher implements EntryFetcherInterface
 {
     private $db_connector;
     private $filters;
-    private $form_columns;
+    private $config;
     private $valid_comparators = [
         'EQUALS', '=',
         'LESS THAN', '<',
@@ -18,27 +16,23 @@ class EntryFetcher implements EntryFetcherInterface
         'LIKE', 'INCLUDES'
     ];
     
-    public function __construct($db_connector, $form_data)
+    public function __construct($db_connector, $config, $form_data)
     {
         $this->db_connector = $db_connector;
-        $this->form_columns = $this->getColumnData();
+        $this->config = $config;
         $this->sql_filters = $this->getSQLFilters($form_data);
         $this->sort_by = $this->getSortColumn($form_data);
     }
-
-    private function getColumnData ()
-    {        
-        $field_fetcher = new FieldFetcher(['include_default' => true]);
-        $table_data = $field_fetcher->getFormFields();
-        if (!$table_data['success']) {
-            error_log('Webform - error in EntryFetcher: could not verify column names.');
-            return [];
-        }
-        $valid_fields = [];
-        foreach($table_data['data'] as $entry) {
-            $valid_fields[$entry['columnName']] = $entry['isNumeric'];
-        }
-        return $valid_fields;
+    
+    private function checkFilterArray ($filter)
+    {
+        $has_necessary = 
+            isset($filter->column_name)
+            && isset($filter->comparator)
+            && isset($filter->filter_value);
+        $comparator_is_valid = in_array(strtoupper($filter->comparator), $this->valid_comparators);
+        $result = $has_necessary && $comparator_is_valid;
+        return $result;
     }
 
     private function getSortColumn ($form_data)
@@ -49,11 +43,17 @@ class EntryFetcher implements EntryFetcherInterface
         ) {
             return null;
         }
-        $sort_by = trim(strtolower($form_data['sort_by']));
-        if (!array_key_exists($sort_by, $this->form_columns)) {
-            return null;
+        $fields = $this->config['fields_to_save'] ?? [];
+        $sort_by = trim($form_data['sort_by']);
+        if (!empty($fields[$sort_by])) {
+            return $sort_by;
         }
-        return $sort_by;
+        foreach ($fields as $field => $data) {
+            if (!empty($data['alias']) && $data['alias'] === $sort_by) {
+                return $field;
+            }
+        }
+        return null;
     }
 
     private function getSQLFilters ($form_data)
@@ -61,16 +61,37 @@ class EntryFetcher implements EntryFetcherInterface
         if (!isset($form_data['filters'])) {
             return [];
         }
+        $fields = $this->config['fields_to_save'];
         $submitted_filters = json_decode($form_data['filters']);
         $verified_filters = [];
         foreach($submitted_filters as $filter) {
-            if ($this->testFilter($filter) === true) {
-                $column = strtolower($filter->column_name);
+            $submitted_name = $filter->column_name;
+            if ($this->checkFilterArray($filter) === true) {
+                $column = null;
+                if (!empty($fields[$submitted_name])) {
+                    $column = $submitted_name;
+                    $data_type = strtoupper($fields[$submitted_name]['type']);
+                } else if ($this->config['submission_date_column']) {
+                    $column = $submitted_name;
+                    $data_type = 'TEXT';
+                } else {
+                    // find field name alias if it doesn't match a column name
+                    foreach ($this->config['fields_to_save'] as $config_field => $config_data) {
+                        if (isset($config_data['alias']) && $config_data['alias'] === $submitted_name) {
+                            $column = $config_field;
+                            $data_type = strtoupper($config_data['type']);
+                            break;
+                        }
+                    }
+                }
+                if (!$column) {
+                    continue;
+                }
                 $comparator = $this->reduceComparator($filter->comparator);
-                $value = $this->form_columns[$column] === 'INTEGER'
+                $value = $data_type === 'INTEGER'
                     ? intval($filter->filter_value)
                     : "'" . trim($filter->filter_value) . "'";
-                if ($this->form_columns[$column] === 'INTEGER') {
+                if ($data_type === 'INTEGER') {
                     if ($comparator === 'LIKE') {
                         $comparator === '=';
                     }
@@ -105,23 +126,12 @@ class EntryFetcher implements EntryFetcherInterface
                 return $comp;
         }
     }
-    
-    private function testFilter ($filter)
-    {
-        $has_necessary = 
-            isset($filter->column_name)
-            && isset($filter->comparator)
-            && isset($filter->filter_value);
-        $comparator_is_valid = in_array(strtoupper($filter->comparator), $this->valid_comparators);
-        $column_name_is_valid = array_key_exists(strtolower($filter->column_name), $this->form_columns);
-        $result = $has_necessary && $comparator_is_valid && $column_name_is_valid;
-        return $result;
-    }
 
     public function getSubmitted()
     {
-        // get request details from $_POST
-        $sql = "SELECT * FROM entries";
+        $table_name = $this->config['table_name'];
+        $fields = $this->config['fields_to_save'] ?? [];
+        $sql = "SELECT * FROM " . $table_name;
         if (count($this->sql_filters) > 0) {
             $sql .= " WHERE ";
             foreach($this->sql_filters as $filter_statement) {
@@ -140,14 +150,23 @@ class EntryFetcher implements EntryFetcherInterface
             ];
         }
         $result = [
-            'success' => true,
-            'data' => $data_rows
+            'success' => true
         ];
         if (count($data_rows) === 0) {
             $result['message'] = 'No matching records were found.';
         } else {            
             $result['message'] = count($data_rows) . ' records found.';
+            foreach($data_rows as &$row) {
+                foreach($row as $col => $val) {
+                    if (!empty($fields[$col]['alias'])) {
+                        $row[$fields[$col]['alias']] = $val;
+                        unset($row[$col]);
+                    }
+                }
+            }
         }
+        // replace data names as aliases
+        $result['data'] = $data_rows;
         return $result;
     }
 }

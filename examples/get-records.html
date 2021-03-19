@@ -6,7 +6,9 @@
 <meta name="robots" content="nofollow,noindex" />
 
 </head>
-
+<style>
+.container > div {margin-bottom: 2em;}
+</style>
 <body>
     
 <main>
@@ -15,12 +17,17 @@
 
 <div class="container">
 
-    <div class="mb-3">
+    <div>
         <h2>Filters</h2>
         <div id="filter-section">
             <div class="filter-group">
                 <select class="form-column">
                   <option selected disabled value="">column name</option>
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                  <option value="random_number">Random Number</option>
+                  <option value="random_boolean">Random Boolean</option>
+                  <option value="submitted_on">Submitted on</option>
                 </select>
     
                 <select class="form-comparator">
@@ -40,25 +47,29 @@
         <button id="add-filter" class="btn btn-primary hidden-btn">Add filter</button>
     </div>
 
-    <div class="mb-3">
+    <div>
         <h2>Sort Results</h2>
         <div id="sort-section">
               <select class="sort-column">
                   <option selected disabled>column name</option>
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                  <option value="submitted_on">Submitted On</option>
               </select>
         </div>
     </div>
       
-    <div class="request-btn-section">
+    <div>
         <button id="show-entries" class="btn btn-primary hidden-btn">Display submitted entries</button>
         <button id="download-entries" class="btn btn-primary hidden-btn">Display and download as CSV</button>
     </div>
     
 
     <h2>Submitted Forms</h2>
-    <div id="info"><em>Please make filter selections above, if desired, and then click </em> Display submitted entries.</div>
+    <div><em>Please make filter selections above, if desired, and then click </em> Display submitted entries.</div>
 
-</div>
+    <div id="info"></div>
+
 </main>
 
 </body>
@@ -113,7 +124,6 @@
         filters.push(filter);
       }
     });
-    
     const sortColumn = document.querySelector('.sort-column').value;
 
     const postData = new FormData();
@@ -124,11 +134,14 @@
     if (sortColumn) {
       postData.append('sort_by', sortColumn);
     }
+
     fetch(postUrl, {
       method: 'post',
       body: postData
-    }).then(response => response.json())
+    })
+      .then(response => response.json())
       .then(response => {
+        console.log(response);
         if (!response.success || !response.data.length) {      
             document.getElementById('info').innerHTML = response.message || 'Error';
             return false;
@@ -136,24 +149,13 @@
         const headers = getHeaders(response.data[0]);
         showData(headers, response.data);
         if (clickedButton === 'download-entries') {
-        exportCSV(headers, response.data);
+          exportCSV(headers, response.data);
         }
       });
   }
 
-  function getFields () {
-    const postData = new FormData();
-    postData.append('request_type', 'get_field_list');    
-    postData.append('include_default', true);
-    fetch(postUrl, {
-      method: 'post',
-      body: postData
-    }).then(response => response.json())
-        .then(response => setOptionsAndFieldRef(response));
-  }
-
   function getHeaders (dataRow) {
-    const headers = ['id', 'submission_date'];
+    const headers = [];
     Object.keys(dataRow).forEach(columnName => {
       if (headers.indexOf(columnName) < 0 && columnName !== 'attachments') {
         headers.push(columnName);
@@ -162,23 +164,6 @@
     headers.push('attachments');
     return headers;
   }
-
-  function setOptionsAndFieldRef(fields) {
-    if (!fields.data) return;
-    const filterSelect = document.querySelector('.form-column');    
-    const sortSelect = document.querySelector('.sort-column');
-    let option;
-    fields.data.forEach(field => {
-      option = document.createElement('option');
-      option.value = field.columnName;
-      option.innerHTML = field.columnName;
-      filterSelect.appendChild(option);
-      sortSelect.appendChild(option.cloneNode(true));
-    });
-    document.querySelectorAll('.hidden-btn').forEach(elem => {
-      elem.classList.remove('hidden-btn');
-    });
-}
 
   function showData (headers, dataRows) {
     let html = '<table><thead><tr>';
@@ -203,9 +188,7 @@
 
   document.getElementById('add-filter').addEventListener('click', addFilter);
   document.getElementById('show-entries').addEventListener('click', getEntries);
-  document.getElementById('download-entries').addEventListener('click', getEntries);
-
-  getFields();
+  //document.getElementById('download-entries').addEventListener('click', getEntries);
 
 })();
 </script>
