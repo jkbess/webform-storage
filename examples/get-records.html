@@ -84,8 +84,8 @@
   function exportCSV (headers, dataRows) {
     const csvRowNames = headers.join(",") + "\n";
     const csvRows = dataRows.map(row => {
-    const values = [];
-    headers.forEach(key => {
+      const values = [];
+      headers.forEach(key => {
         if (row.hasOwnProperty(key) && row[key] !== null) {
         if (typeof row[key] === 'string' && row[key].match(/[,"\n]/)) {
             values.push('"' + row[key].replace(/"/g, '""') + '"');
@@ -95,8 +95,8 @@
         } else {
         values.push("");
         }
-    });
-    return values.join(",");
+      });
+      return values.join(",");
     }).join("\n");
 
     const uri = encodeURI("data:text/csv;charset=utf-8," + csvRowNames + csvRows);
@@ -134,7 +134,10 @@
     if (sortColumn) {
       postData.append('sort_by', sortColumn);
     }
-
+    //log postData
+    for(var pair of postData.entries()) {
+      console.log(pair[0]+ ', '+ pair[1]);
+    }
     fetch(postUrl, {
       method: 'post',
       body: postData

@@ -5,7 +5,7 @@ $config = include (__DIR__ . './config.php');
 $db_path = $config['database_path'];
 
 if (file_exists($db_path) && filesize($db_path) > 0) {
-    echo 'Please delete the existing database manually before reinstalling.';
+    echo 'Please delete the existing database before reinstalling.';
     exit();
 }
 

@@ -51,14 +51,14 @@
 (function(){
   function submitForm(event) {
     event.preventDefault();
+
+    /* add form fields to FormData object */
     var postData = new FormData();
-    // add fields
     var name = document.getElementById('name').value;
     var email = document.getElementById('email').value;
     var random_number = document.getElementById('random_number').value;
-    var random_boolean = document.getElementById('random_boolean').checked;
+    var random_boolean = document.getElementById('random_boolean').checked ? 1 : 0;
     var filey_file = document.getElementById('filey_file').files[0];
-
     postData.append('request_type', 'save_form');
     postData.append('name', name);
     postData.append('email', email);
@@ -68,9 +68,11 @@
       postData.append('filey_file', filey_file);
     }
 
+    /* define url as needed to send fetch request to your custom PHP */
     var url = window.location.href.split('/');
     url.pop();
     url = url.join('/') + '/request-handler.php';
+
     fetch(url, {
       method: 'post',
       body: postData

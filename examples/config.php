@@ -23,7 +23,7 @@ return [
         'random_boolean' => [
             'type' => 'INTEGER',
             'required' => false, 
-            'alias' => 'True of false'
+            'alias' => 'True or false'
         ]
     ],
     'submission_date_column' => 'submitted_on', // column in which to save datetime on form submission

@@ -13,7 +13,7 @@ return [
         ]
     ],
     'include_submission_date' => 'field_name', // column in which to save datetime on form submission
-    'open_data_access' => false,
+    'submission_date_column' => false,
     'attachments' => [
         'column_name' => null,
         'allowed_file_types' => ['pdf', 'png', 'jpg', 'jpeg', 'gif']
