@@ -1,6 +1,7 @@
 <?php
 
 require __DIR__ . '/vendor/autoload.php';
+// require __DIR__ . '/src/autoload.php';
 
 use Webform\Connector\DatabaseConnector;
 use Webform\Fetcher\EntryFetcher;
@@ -18,7 +19,7 @@ class Webform
     public function __construct($config)
     {        
         $this->config = $config;
-        $this->db_path = $config['database_path'];
+        $this->db_path = $_SERVER['DOCUMENT_ROOT'] . $config['database_path'];
         $this->db_connector = new DatabaseConnector($this->db_path);
         $this->post_data = $_POST;
         $this->request_type = $_POST['request_type'] ?? null;

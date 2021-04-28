@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'database_path' => __DIR__ . './webform.db',
+    'database_path' => '/examples/webform.db',
     'table_name' => 'submissions',
     'primary_key' => 'ID',
     'fields_to_save' => [

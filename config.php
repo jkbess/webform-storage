@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'database_path' => __DIR__ . './webform.db', // path to the SQLite database itself
+    'database_path' =>'/path/to/webform.db', // path to the SQLite database itself
     'table_name' => 'submissions', // name of table in database
     'primary_key' => 'ID', // table column with autoincrementing primary key
     'fields_to_save' => [
@@ -16,7 +16,7 @@ return [
     'submission_date_column' => 'field_name',
     // settings for handling files attached to web forms
     'attachments' => [
-        'save_path' => '/path/to/attachments/', // path to folder where form attachments should be saved, starting from the root folder
+        'save_path' => '/path/to/attachments/', // path to folder where form attachments should be saved, starting from the DOCUMENT_ROOT
         'column_name' => 'attachment_urls', // table column in which to store the URLs of uploaded files 
         'required' => false, // whether attachments must be included with form submission
         'allowed_file_types' => ['pdf', 'png', 'jpg', 'jpeg', 'gif'], // file types not listed will be rejected
