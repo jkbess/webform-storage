@@ -26,11 +26,19 @@ return [
             'alias' => 'True or false'
         ]
     ],
-    'submission_date_column' => 'submitted_on', // column in which to save datetime on form submission
+    'submission_date_column' => 'submitted_on',
     'open_data_access' => false,
-    'attachments' => [
-        'column_name' => null,
-        'allowed_file_types' => ['pdf', 'png', 'jpg', 'jpeg', 'gif']
+    'attachments' => [        
+        'save_path' => '/examples/uploads/',
+        'column_name' => 'attached_files',
+        'required' => false,
+        'allowed_file_types' => ['pdf', 'png', 'jpg', 'jpeg', 'gif'],
+        'process_images' => true,
+        'jpg_quality' => 80,
+        'max_image_dimensions' => [
+            'width' => 480,
+            'height' => 720
+        ]
     ]
 ];
 

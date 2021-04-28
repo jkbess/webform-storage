@@ -3,7 +3,6 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use Webform\Connector\DatabaseConnector;
-//use Webform\Fetcher\FieldFetcher;
 use Webform\Fetcher\EntryFetcher;
 use Webform\Submitter\FormSubmitter;
 use Webform\Editor\FormEditor;
@@ -43,10 +42,7 @@ class Webform
         $post = $this->post_data;
         $config = $this->config;
 
-        switch ($this->request_type) {           
-            /*case 'get_field_list':
-                $fetcher = new FieldFetcher($db_connector, $post);
-                return $fetcher->getFormFields();*/
+        switch ($this->request_type) {
             case 'save_form':
                 $submitter = new FormSubmitter($db_connector, $config);
                 return $submitter->storeSubmission($post);
@@ -54,8 +50,7 @@ class Webform
             case 'get_entries':
                 $fetcher = new EntryFetcher($db_connector, $config, $post);
                 return $fetcher->getSubmitted();
-            
-            case null:
+
             default:
                 return [
                     'success' => false,

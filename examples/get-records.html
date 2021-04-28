@@ -134,10 +134,6 @@
     if (sortColumn) {
       postData.append('sort_by', sortColumn);
     }
-    //log postData
-    for(var pair of postData.entries()) {
-      console.log(pair[0]+ ', '+ pair[1]);
-    }
     fetch(postUrl, {
       method: 'post',
       body: postData
@@ -160,11 +156,10 @@
   function getHeaders (dataRow) {
     const headers = [];
     Object.keys(dataRow).forEach(columnName => {
-      if (headers.indexOf(columnName) < 0 && columnName !== 'attachments') {
+      if (headers.indexOf(columnName) < 0) {
         headers.push(columnName);
       }
     });
-    headers.push('attachments');
     return headers;
   }
 
@@ -191,7 +186,7 @@
 
   document.getElementById('add-filter').addEventListener('click', addFilter);
   document.getElementById('show-entries').addEventListener('click', getEntries);
-  //document.getElementById('download-entries').addEventListener('click', getEntries);
+  document.getElementById('download-entries').addEventListener('click', getEntries);
 
 })();
 </script>

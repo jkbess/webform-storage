@@ -4,6 +4,7 @@ namespace Webform\Submitter;
 
 class AttachmentHandler implements AttachmentHandlerInterface
 {    
+    private $save_path;
     private $allowed_extensions;
     private $jpg_quality;
     private $max_dimensions;
@@ -11,26 +12,13 @@ class AttachmentHandler implements AttachmentHandlerInterface
 
     public function __construct ($attachments_settings)
     {
+        $this->save_path = $attachments_settings['save_path'] ?? false;
         $this->allowed_extensions = $attachments_settings['allowed_file_types'] ?? [];
         $this->process_images = $attachments_settings['process_images'] ?? false;
         $this->jpg_quality = $attachments_settings['jpg_quality'] ?? 90;
         $this->max_dimensions = $attachments_settings['max_image_dimensions'] ?? [];
     }
     
-    private function buildUploadUrl($file_name)
-    {
-        $folder = substr(getcwd(), strlen($_SERVER['DOCUMENT_ROOT']));
-        $folder =  dirname($folder, 2);
-        $folder = str_replace("\\", '/', $folder);
-        $folder = ($folder === '/') ? '' : $folder;
-        $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-            ? 'https'
-            : 'http';
-        $url .= '://' . $_SERVER['HTTP_HOST'];
-        $url .= $folder . '/uploads/' . $file_name;
-        return $url;
-    }
-
     private function processImage($img_path)
     {
         $isPng = (strtolower(pathinfo($img_path)['extension']) === 'png');
@@ -42,14 +30,21 @@ class AttachmentHandler implements AttachmentHandlerInterface
         list($width, $height) = getimagesize($img_path);
         // if too big, resize
         $max = $this->max_dimensions;
-        $scale = 1;
-        if (isset($max['width']) && isset($max['height'])) {
-            if ($width > $max['width']) {
-                $scale = $max['width'] / $width;
-            } else if ($height > $max['height']) {
-                $scale = $max['height'] / $height;
+        $width_scale = 1;
+        $height_scale = 1;
+        if (!empty($max['width']) && is_numeric($max['width'])) {
+            $max_width = intval($max['width']);
+            if ($max_width > 0 && $width > $max_width) {
+                $width_scale = $max_width / $width;
             }
         }
+        if (!empty($max['height']) && is_numeric($max['height'])) {
+            $max_height = intval($max['height']);
+            if ($max_height > 0 && $height > $max_height) {
+                $height_scale = $max_height / $height;
+            }
+        }
+        $scale = $width_scale < $height_scale ? $width_scale : $height_scale;
         $new_width = $width * $scale;
         $new_height = $height * $scale;
         $processed_img = imagecreatetruecolor($new_width, $new_height);
@@ -93,13 +88,14 @@ class AttachmentHandler implements AttachmentHandlerInterface
         $new_name = preg_replace('/\s+/', '-', $new_name);
         $new_name = preg_replace('/[^\w-]/', '', $new_name);
         $file_name = $new_name . '.' . $ext;
-        $destination = __DIR__ . '/../../uploads/' . $file_name;
+        $destination = $_SERVER['DOCUMENT_ROOT'] . $this->save_path . $file_name;
+
         // if file name exists, append numeral
         $copy_number = 0;
         while (file_exists($destination)) {
             $copy_number += 1;
             $file_name = $new_name . '-' . strval($copy_number) . '.' . $ext;
-            $destination = __DIR__ . '/../../uploads/' . $file_name;
+            $destination = $_SERVER['DOCUMENT_ROOT'] . $this->save_path . $file_name;
         }
         if (!move_uploaded_file($tmp_name, $destination)) {
             error_log('There was an error uploading the file: ' . $tmp_name);
@@ -108,8 +104,7 @@ class AttachmentHandler implements AttachmentHandlerInterface
         if (in_array($ext, ['jpg', 'jpeg', 'png']) && $this->process_images) {
            $this->processImage($destination);
         }
-        $url = $this->buildUploadUrl($file_name);
-        return $url;
+        return $this->save_path . $file_name;
     }
     
     public function getAttachmentUrls()

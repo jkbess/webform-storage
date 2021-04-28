@@ -6,7 +6,7 @@ if (($_SERVER['REQUEST_METHOD'] !== 'POST')) {
 
 require (__DIR__ . '/../Webform.php');
 
-$config = include (__DIR__ . './config.php'); 
+$config = include (__DIR__ . './config-example.php'); 
 
 $form_interface = new Webform($config);
 

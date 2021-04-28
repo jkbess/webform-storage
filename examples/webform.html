@@ -25,18 +25,18 @@
         </div>
         
         <div>
-            <label for="random_number">An integer of some kind</label>
+            <label for="random_number">A   random integer of some kind</label>
             <input type="text" name="random_number" id="random_number"/>
         </div>
         
         <div>
-            <label for="random_boolean">A boolean of some kind</label>
+            <label for="random_boolean">True or false? (A random boolean)</label>
             <input type="checkbox" name="random_boolean" id="random_boolean"/>
         </div>
 
         <div>
             <label for="filey_file">File to upload</label>
-            <input type="file" name="filey_file" id="filey_file" />
+            <input type="file" name="filey_file" id="filey_file" multiple />
         </div>
 
         <input type="submit" value="Submit" class="btn btn-primary" />
@@ -58,16 +58,20 @@
     var email = document.getElementById('email').value;
     var random_number = document.getElementById('random_number').value;
     var random_boolean = document.getElementById('random_boolean').checked ? 1 : 0;
-    var filey_file = document.getElementById('filey_file').files[0];
+    var filey_files = document.getElementById('filey_file').files;
     postData.append('request_type', 'save_form');
     postData.append('name', name);
-    postData.append('email', email);
-    postData.append('random_number', parseInt(random_number, 10));
-    postData.append('random_boolean', random_boolean);
-    if (filey_file) {
-      postData.append('filey_file', filey_file);
+    postData.append('email', email);  
+    if (random_number && isNaN(random_number) === false) {
+      random_number = parseInt(random_number, 10);
+    } else {
+      random_number = '';
     }
-
+    postData.append('random_number', random_number);
+    postData.append('random_boolean', random_boolean);
+    for (var i = 0; i < filey_files.length; i++) {
+      postData.append('file_' + i, filey_files[i]);
+    }
     /* define url as needed to send fetch request to your custom PHP */
     var url = window.location.href.split('/');
     url.pop();

@@ -1,6 +1,6 @@
 <?php 
 
-$config = include (__DIR__ . './config.php');
+$config = include (__DIR__ . '/config-example.php');
 
 $db_path = $config['database_path'];
 

@@ -4,6 +4,7 @@ namespace Webform\Fetcher;
 
 class EntryFetcher implements EntryFetcherInterface
 {
+
     private $db_connector;
     private $fields;
     private $filters;
@@ -22,8 +23,8 @@ class EntryFetcher implements EntryFetcherInterface
         $this->db_connector = $db_connector;
         $this->config = $config;
         $this->sql_filters = $this->getSQLFilters($form_data);
-        $this->sort_by = $this->getSortColumn($form_data);
-        $this->fields = $this->getFields();
+        $this->fields = $config['fields_to_save'] ?? [];
+        $this->sort_by = $this->getSortColumn($form_data, $this->fields);
     }
     
     private function checkFilterArray ($filter)
@@ -37,20 +38,7 @@ class EntryFetcher implements EntryFetcherInterface
         return $result;
     }    
 
-    private function getFields ()
-    {        
-        $fields = $this->config['fields_to_save'] ?? [];
-        $attachment_column = $this->config['attachments']['column_name'];
-        if ($attachment_column) {
-            $fields[$attachment_column] = [
-                'type' => 'TEXT',
-                'required' => false
-            ];
-        }
-        return $fields;
-    }
-
-    private function getSortColumn ($form_data)
+    private function getSortColumn ($form_data, $fields)
     {
         if (
             !isset($form_data['sort_by'])
@@ -62,7 +50,7 @@ class EntryFetcher implements EntryFetcherInterface
         if (!empty($fields[$sort_by])) {
             return $sort_by;
         }
-        foreach ($this->fields as $field => $data) {
+        foreach ($fields as $field => $data) {
             if (!empty($data['alias']) && $data['alias'] === $sort_by) {
                 return $field;
             }
@@ -155,7 +143,7 @@ class EntryFetcher implements EntryFetcherInterface
         if ($this->sort_by) {
             $sql .= ' ORDER BY ' . $this->sort_by;
         }
-        error_log($sql);
+
         $data_rows = $this->db_connector->doQuery($sql);
         if ($data_rows === false) {
             return [
@@ -169,7 +157,7 @@ class EntryFetcher implements EntryFetcherInterface
         if (count($data_rows) === 0) {
             $result['message'] = 'No matching records were found.';
         } else {            
-            $result['message'] = count($data_rows) . ' records found.';
+            $result['message'] = count($data_rows) . ' record[s] found.';
             /* replace column names with alias when used */
             foreach($data_rows as &$row) {
                 foreach($row as $col => $val) {

@@ -8,13 +8,15 @@ class FormSubmitter implements FormSubmitterInterface
 {
     private $db_connector;
     private $config;
+    private $attachment_config;
     private $fields;
     
     public function __construct($db_connector, $config)
     {   
         $this->db_connector = $db_connector;
-        $this->config = $config;
-        $this->fields = $this->getFields();
+        $this->config = $config;        
+        $this->attachment_config = $config['attachments'] ?? [];
+        $this->fields = $config['fields_to_save'] ?? [];
     }
 
     private function buildSQL ($entries)
@@ -29,33 +31,7 @@ class FormSubmitter implements FormSubmitterInterface
         $reference_list = rtrim($reference_list, ',');
         $table = $this->config['table_name'];
         $sql = "INSERT INTO $table ({$column_list}) VALUES ({$reference_list})";
-        error_log($sql);
         return $sql;
-    }
-
-    private function getColumnAliases ()
-    {
-        $fields = $this->config['fields_to_save'] ?? [];
-        $aliases = [];
-        foreach ($fields as $field => $settings) {
-            if (!empty($field['alias'])) {
-                $aliases[$field['alias']] = $field;
-            }
-        }
-        return $aliases;
-    }
-
-    private function getFields ()
-    {        
-        $fields = $this->config['fields_to_save'] ?? [];
-        $attachment_column = $this->config['attachments']['column_name'];
-        if ($attachment_column) {
-            $fields[$attachment_column] = [
-                'type' => 'TEXT',
-                'required' => false
-            ];
-        }
-        return $fields;
     }
 
     /* return array of trimmed/corrected values or an error string */
@@ -67,43 +43,48 @@ class FormSubmitter implements FormSubmitterInterface
         $missing = [];
         foreach ($fields as $field => $data) {
             //check for required, push to $missing array if not present
-            $data_type = strtoupper($data['type']);
+            $alias = null;
+            $value = '';
+            // if $field not present, look for alias
             if (!isset($form[$field])) {
                 $alias = $data['alias'] ?? null;
-                if (isset($form[$alias])) {
+                if ($alias && isset($form[$alias])) {
                     $value = $form[$alias];
-                } else {
-                    array_push($missing, $field);
-                    continue;
                 }
             } else {
                 $value = $form[$field];
             }
+            if (!empty($data['required']) && trim($value) === '') {
+                array_push($missing, $alias ?? $field);
+                continue;
+            }
             if (is_array($value)) {
                 $value = implode(', ', $value);
-            } else if ($value === "on") {
-                $value = $data_type === 'TEXT' ? 'true' : 1;
             }
+            /* type coercion */
+            $data_type = strtoupper($data['type']);
             switch ($data_type) {
                 case 'TEXT':
-                    $val = trim(stripslashes($value));
-                    $val = preg_replace('/\r|\n/i', '', $value); // to prevent injection attacks
+                    $value = trim(stripslashes($value));
+                    $value = preg_replace('/\r|\n/i', '', $value); // to prevent injection attacks
                     break;
                 case 'INTEGER':
-                    if ($val === 'true'){
-                        $val = 1;
+                    if ($value === 'true'){
+                        $value = 1;
                     } else if ($value === 'false') {
-                        $val = 0;
+                        $value = 0;
+                    } else if ($value === '') {
+                        $value = null;
                     } else {
-                        $val = intval($value);
+                        $value = intval($value);
                     }
                     break;
                 case 'REAL':
-                    $val = floatval($value);
+                    $value = floatval($value);
             }
             $entries[$field] = $value;
         }
-
+        
         if (count($missing) > 0) {
             return 'Required fields missing: ' . implode(', ', $missing);
         }
@@ -113,22 +94,25 @@ class FormSubmitter implements FormSubmitterInterface
             $now = new \DateTime();
             $entries[$date_column] = $now->format('Y-m-d H:i:s');
         }
-
+        
+        $attachment_config = $this->attachment_config;
         if (!!count($_FILES)) {
-            $attachment_settings = $config['attachments'] ?? null;
-            if ($attachment_settings && $attachment_settings['column_name']) {
-                $file_handler = new AttachmentHandler($attachment_settings);
+            if ($attachment_config['save_path'] && $attachment_config['column_name'] ) {
+                $file_handler = new AttachmentHandler($attachment_config);
                 $attachment_urls = $file_handler->getAttachmentUrls();
                 if ($attachment_urls) {
-                    $attach_col = $attachment_settings['column_name'];
+                    $attach_col = $attachment_config['column_name'];
                     $entries[$attach_col] = $attachment_urls;
                 }
             }
+        } else if ($attachment_config['required'] === true) {
+            return 'Required attachments are missing.'; 
         }
 
         if (count($entries) === 0) {
             return 'Form submitted without any valid fields!';
         }
+
         return $entries;
 	}
 
