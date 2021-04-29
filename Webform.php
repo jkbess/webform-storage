@@ -25,18 +25,6 @@ class Webform
         $this->request_type = $_POST['request_type'] ?? null;
     }
 
-    private function verifyUser()
-    {
-        if (
-            isset($this->config['open_data_access'])
-            && $this->config['open_data_access'] === true
-        ) {
-            return true;
-        }
-        $access = new UserVerifier();
-        return $access->hasFullAccess();
-    }
-
     public function handleRequest()
     {
         $db_connector = $this->db_connector;
