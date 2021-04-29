@@ -9,6 +9,8 @@ class EntryFetcher implements EntryFetcherInterface
     private $fields;
     private $filters;
     private $config;
+    private $columns_to_fetch;
+    private $sort_by;
     private $valid_comparators = [
         'EQUALS', '=',
         'LESS THAN', '<',
@@ -24,6 +26,7 @@ class EntryFetcher implements EntryFetcherInterface
         $this->config = $config;
         $this->sql_filters = $this->getSQLFilters($form_data);
         $this->fields = $config['fields_to_save'] ?? [];
+        $this->columns_to_fetch = $this->getFetchColumns($form_data, $this->fields);
         $this->sort_by = $this->getSortColumn($form_data, $this->fields);
     }
     
@@ -37,6 +40,37 @@ class EntryFetcher implements EntryFetcherInterface
         $result = $has_necessary && $comparator_is_valid;
         return $result;
     }    
+
+    
+    private function getFetchColumns ($form_data, $fields)
+    {
+        $default = '*';
+        if (
+            !isset($form_data['fields'])
+            || gettype($form_data['fields']) !== 'string'
+            || trim($form_data['fields']) === '*'
+        ) {
+            return $default;
+        }
+        $valid_columns = [];
+        $columns = explode(',', $form_data['fields']);
+        foreach ($columns as $column) {
+            $col_name = trim($column);
+            if (isset($fields[$col_name])) {
+                array_push($valid_columns, $col_name);
+            } else {
+                foreach ($fields as $field => $data) {
+                    if (!empty($data['alias']) && $data['alias'] === $col_name) {
+                        array_push($valid_columns, $field);
+                    }
+                }
+            }
+        }
+        if (count($valid_columns) > 0) {
+            return implode(',', $valid_columns);
+        }
+        return $default;
+    }
 
     private function getSortColumn ($form_data, $fields)
     {
@@ -131,8 +165,7 @@ class EntryFetcher implements EntryFetcherInterface
 
     public function getSubmitted()
     {
-        $table_name = $this->config['table_name'];
-        $sql = "SELECT * FROM " . $table_name;
+        $sql = "SELECT " . $this->columns_to_fetch . " FROM " . $this->config['table_name'];
         if (count($this->sql_filters) > 0) {
             $sql .= " WHERE ";
             foreach($this->sql_filters as $filter_statement) {
@@ -143,7 +176,6 @@ class EntryFetcher implements EntryFetcherInterface
         if ($this->sort_by) {
             $sql .= ' ORDER BY ' . $this->sort_by;
         }
-
         $data_rows = $this->db_connector->doQuery($sql);
         if ($data_rows === false) {
             return [
