@@ -27,7 +27,6 @@ return [
         ]
     ],
     'submission_date_column' => 'submitted_on',
-    'open_data_access' => false,
     'attachments' => [        
         'save_path' => '/examples/uploads/',
         'column_name' => 'attached_files',
