@@ -36,7 +36,7 @@ Web form submissions must include a `request_type` of **save_form**. The applica
 Requests to retrieve stored data must include a `request_type` of **get_entries**. **Out of the box this application does not do any security checks** on these request. If users of the web form are submitting **any** kind of private information, you must add your own security checks to prevent the database records from being publicly assessible. Note that the *request-handler.php* example includes an empty statement in which you can insert security code.
 
 The data returned will include all table columns. By default it will include all saved form submissions, but you can limit or sort results by including these properties with your POST request:
-* **`fields`** - an comma-separated list of column/field names (or aliases) to include. If set to a false or null value, all columns will be included.
+* **`fields`** - a comma-separated list of column/field names (or aliases) to include. If not present or set to a false or null value, all columns will be included.
 * **`sort_by`** - the name of the column/field (or its alias) by which you would like the results sorted.
 * **`filters`** - an array of JSON objects which will limit the results. Each JSON must have the properties:
   * **`column_name`** - the column/field (or its alias) on which to filter.

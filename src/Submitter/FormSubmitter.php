@@ -55,7 +55,11 @@ class FormSubmitter implements FormSubmitterInterface
                 $value = $form[$field];
             }
             if (!empty($data['required']) && trim($value) === '') {
-                array_push($missing, $alias ?? $field);
+                if ($alias) {
+                    array_push($missing, $field);
+                } else {
+                    array_push($missing, $field);
+                }
                 continue;
             }
             if (is_array($value)) {
