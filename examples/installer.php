@@ -2,7 +2,7 @@
 
 $config = include (__DIR__ . '/config-example.php'); // change as needed
 
-$db_path = $config['database_path'];
+$db_path = $_SERVER['DOCUMENT_ROOT'] . $config['database_path'];
 
 if (file_exists($db_path) && filesize($db_path) > 0) {
     echo 'Please delete the existing database before reinstalling.';
