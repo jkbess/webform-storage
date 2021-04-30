@@ -38,7 +38,7 @@ Requests to retrieve stored data must include a `request_type` of **get_entries*
 The data returned will include all table columns. By default it will include all saved form submissions, but you can limit or sort results by including these properties with your POST request:
 * **`fields`** - a comma-separated list of column/field names (or aliases) to include. If not present or set to a false or null value, all columns will be included.
 * **`sort_by`** - the name of the column/field (or its alias) by which you would like the results sorted.
-* **`filters`** - an array of JSON objects which will limit the results. Each JSON must have the properties:
+* **`filters`** - an array of objects which will limit the results. Each object must have the properties:
   * **`column_name`** - the column/field (or its alias) on which to filter.
   * **`filter_value`** - the value to compare against.
   * **`comparator`** - how to check the field value against the filter value. Permitted comparators are *'EQUALS'*, *'='*, *'LESS THAN'*, *'<'*, *'GREATER THAN'*, *'>'*, *'<='*, *'>='*, *'<>'*, *'!='*, *'NOT EQUAL'*, *'LIKE'*, and *'INCLUDES'*. Note that the last two are synonymous and perform partial/wild-card string matches.
