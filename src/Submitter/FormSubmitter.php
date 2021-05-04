@@ -101,7 +101,7 @@ class FormSubmitter implements FormSubmitterInterface
         
         $attachment_config = $this->attachment_config;
         if (!!count($_FILES)) {
-            if ($attachment_config['save_path'] && $attachment_config['column_name'] ) {
+            if (!empty($attachment_config['save_path']) && !empty($attachment_config['column_name'])) {
                 $file_handler = new AttachmentHandler($attachment_config);
                 $attachment_urls = $file_handler->getAttachmentUrls();
                 if ($attachment_urls) {
@@ -109,7 +109,7 @@ class FormSubmitter implements FormSubmitterInterface
                     $entries[$attach_col] = $attachment_urls;
                 }
             }
-        } else if ($attachment_config['required'] === true) {
+        } else if (!empty($attachment_config['required']) && $attachment_config['required'] === true) {
             return 'Required attachments are missing.'; 
         }
 
