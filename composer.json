@@ -2,7 +2,15 @@
     "name": "bessj/webform-storage",
     "description": "Simple storage of web form submissions in SQLite.",
     "type": "library",
-    "require": {},
+    "keywords" :["php"],
+    "require": {
+        "php": ">=7.0",
+        "ext-sqlite3": "*"
+    },
+    "authors": [
+        {"name": "James Bess"}
+    ],
+    "license": "MIT",
     "autoload": {
         "psr-4": {"Webform\\": "src/"}
     }
