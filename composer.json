@@ -7,6 +7,12 @@
         "php": ">=7.0",
         "ext-sqlite3": "*"
     },
+    "authors": [
+        {
+            "name": "James Bess",
+            "role": "developer"
+        }
+    ],
     "license": "MIT",
     "autoload": {
         "psr-4": {"Webform\\": "src/"}
