@@ -8,7 +8,10 @@
         "ext-sqlite3": "*"
     },
     "authors": [
-        {"name": "James Bess"}
+        {
+            "name": "James Bess",
+            "email": "37188068+jkbess@users.noreply.github.com"
+        }
     ],
     "license": "MIT",
     "autoload": {
